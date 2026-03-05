@@ -8,9 +8,8 @@ interface DialogueProps {
 }
 
 export const Dialogue: React.FC<DialogueProps> = ({ onChoice, roomNumber }) => {
-  const isWeaponSelect = roomNumber % 15 === 0;
-  const isLifeOffer = !isWeaponSelect && roomNumber % 5 === 0;
-  const isStandardUpgrade = !isWeaponSelect && !isLifeOffer && roomNumber % 3 === 0;
+  const isWeaponSelect = roomNumber % 5 === 0;
+  const isStandardUpgrade = !isWeaponSelect && roomNumber % 3 === 0;
 
   return (
     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-8">
@@ -31,8 +30,8 @@ export const Dialogue: React.FC<DialogueProps> = ({ onChoice, roomNumber }) => {
             <div>
               <h2 className="text-sm font-mono text-emerald-400 uppercase tracking-[0.2em]">Neural Link</h2>
               <p className="text-2xl font-serif italic text-slate-100">
-                {isWeaponSelect ? "\"RBYT3R, we've unlocked advanced armaments. Choose your primary weapon system.\"" :
-                 isLifeOffer ? "\"Critical systems check complete. I can offer a core backup or structural reinforcement.\"" :
+                {roomNumber % 15 === 0 ? "\"Sector 15 reached. Reboot credit awarded. Choose your primary weapon system.\"" :
+                 isWeaponSelect ? "\"RBYT3R, we've unlocked advanced armaments. Choose your primary weapon system.\"" :
                  "\"RBYT3R, the demon infestation is spreading. We need to optimize your combat systems.\""}
               </p>
             </div>
@@ -70,30 +69,6 @@ export const Dialogue: React.FC<DialogueProps> = ({ onChoice, roomNumber }) => {
                   onClick={() => onChoice('CHOOSE_MINIGUN')}
                 />
               </>
-            ) : isLifeOffer ? (
-              <>
-                <UpgradeButton 
-                  icon={<Shield className="w-6 h-6 text-emerald-400" />}
-                  title="Extra Life"
-                  desc="Gain an additional reboot."
-                  color="emerald"
-                  onClick={() => onChoice('LIFE')}
-                />
-                <UpgradeButton 
-                  icon={<Heart className="w-6 h-6 text-rose-400" />}
-                  title="Vitality"
-                  desc="Increase max health."
-                  color="rose"
-                  onClick={() => onChoice('HEALTH')}
-                />
-                <UpgradeButton 
-                  icon={<Zap className="w-6 h-6 text-blue-400" />}
-                  title="Neural"
-                  desc="Unlock Neural charges."
-                  color="blue"
-                  onClick={() => onChoice('MAGIC')}
-                />
-              </>
             ) : (
               <>
                 <UpgradeButton 
@@ -123,7 +98,7 @@ export const Dialogue: React.FC<DialogueProps> = ({ onChoice, roomNumber }) => {
 
           <div className="pt-4 border-t border-slate-800 flex justify-between items-center text-[10px] font-mono text-slate-500 uppercase tracking-widest">
             <span>Sector {roomNumber} Milestone</span>
-            <span>{isWeaponSelect ? 'Armory Unlocked' : isLifeOffer ? 'Backup Available' : 'Optimization Ready'}</span>
+            <span>{isWeaponSelect ? 'Armory Unlocked' : 'Optimization Ready'}</span>
           </div>
         </div>
       </motion.div>

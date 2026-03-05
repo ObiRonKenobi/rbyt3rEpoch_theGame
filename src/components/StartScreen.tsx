@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Play, Shield, Target, Zap } from 'lucide-react';
+import { Leaderboard } from './Leaderboard';
 
 interface StartScreenProps {
   onStart: () => void;
@@ -77,6 +78,10 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
           <Play className="w-6 h-6 fill-current" />
           START MISSION
         </motion.button>
+
+        <div className="pt-4">
+          <Leaderboard />
+        </div>
 
         <div className="pt-8 flex justify-center gap-8 text-[10px] font-mono text-slate-600 uppercase tracking-widest">
           <span>v1.0.4 Stable</span>

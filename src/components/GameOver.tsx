@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { RefreshCw, Trophy, DoorOpen } from 'lucide-react';
+import { Leaderboard } from './Leaderboard';
 
 interface GameOverProps {
   score: number;
@@ -22,7 +23,7 @@ export const GameOver: React.FC<GameOverProps> = ({ score, rooms, onRestart }) =
             animate={{ y: 0 }}
             className="text-7xl font-black text-slate-100 italic tracking-tighter"
           >
-            NOT-STONKS
+            TERMINATED
           </motion.h1>
           <p className="text-slate-400 font-mono uppercase tracking-[0.3em] text-sm">Your journey ends here</p>
         </div>
@@ -53,6 +54,10 @@ export const GameOver: React.FC<GameOverProps> = ({ score, rooms, onRestart }) =
           <RefreshCw className="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" />
           REBOOT AND PURGE
         </motion.button>
+
+        <div className="pt-4">
+          <Leaderboard />
+        </div>
 
         <div className="pt-8">
           <p className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">

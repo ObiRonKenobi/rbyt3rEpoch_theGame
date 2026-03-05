@@ -5,6 +5,7 @@ import { HUD } from './HUD';
 import { Dialogue } from './Dialogue';
 import { GameOver } from './GameOver';
 import { StartScreen } from './StartScreen';
+import { InitialsEntry } from './InitialsEntry';
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
@@ -53,6 +54,7 @@ const MINIGUN_WEAPON = {
 
 export const Game: React.FC = () => {
   const [gameStarted, setGameStarted] = useState(false);
+  const [showInitials, setShowInitials] = useState(false);
   const [meleeSwing, setMeleeSwing] = useState<{ active: boolean; angle: number }>({ active: false, angle: 0 });
   const stageRef = useRef<any>(null);
   const [gameState, setGameState] = useState<GameState>({
@@ -71,7 +73,7 @@ export const Game: React.FC = () => {
       weapon: SWORD_WEAPON,
       score: 0,
       roomsCleared: 0,
-      lives: 1,
+      lives: 0,
     },
     enemies: [],
     bullets: [],
@@ -117,18 +119,38 @@ export const Game: React.FC = () => {
       else { x = -50; y = Math.random() * CANVAS_HEIGHT; }
 
       const difficultyMultiplier = 1 + (roomNum * 0.1);
-      newEnemies.push({
-        id: `enemy-${Date.now()}-${i}`,
-        pos: { x, y },
-        radius: 15,
-        health: 30 * difficultyMultiplier, // ~3 hits at 10 damage
-        maxHealth: 30 * difficultyMultiplier,
-        speed: 0.8 + Math.random() * (0.5 + roomNum * 0.03), // Slower
-        color: '#ef4444',
-        type: 'BASIC',
-        lastShot: 0,
-        shootCooldown: 2500 / difficultyMultiplier,
-      });
+      
+      // Every 10 levels, introduce a Green Demon (Tank)
+      // At level 10+, there's a chance to spawn one.
+      const isTank = roomNum >= 10 && (i === 0 || Math.random() < 0.2);
+      
+      if (isTank) {
+        newEnemies.push({
+          id: `enemy-tank-${Date.now()}-${i}`,
+          pos: { x, y },
+          radius: 25, // Larger
+          health: 60 * difficultyMultiplier, // Twice as many hits as basic (30)
+          maxHealth: 60 * difficultyMultiplier,
+          speed: 0.4 + Math.random() * 0.2, // Much slower
+          color: '#22c55e', // Green
+          type: 'TANK',
+          lastShot: 0,
+          shootCooldown: 3000 / difficultyMultiplier,
+        });
+      } else {
+        newEnemies.push({
+          id: `enemy-${Date.now()}-${i}`,
+          pos: { x, y },
+          radius: 15,
+          health: 30 * difficultyMultiplier,
+          maxHealth: 30 * difficultyMultiplier,
+          speed: 0.6 + Math.random() * (0.3 + roomNum * 0.02), // Slower than before
+          color: '#ef4444',
+          type: 'BASIC',
+          lastShot: 0,
+          shootCooldown: 2500 / difficultyMultiplier,
+        });
+      }
     }
     return newEnemies;
   }, []);
@@ -487,12 +509,18 @@ export const Game: React.FC = () => {
     let inDialogue = prev.inDialogue;
     let finalEnemiesList = finalEnemies;
     if (finalEnemies.length === 0 && !prev.inDialogue) {
-      if (prev.roomNumber % 3 === 0 || prev.roomNumber % 5 === 0) {
+      newPlayer.roomsCleared++;
+      if (prev.roomNumber % 15 === 0) {
+        // Award reboot credit automatically
+        newPlayer.lives++;
+        inDialogue = true;
+      } else if (prev.roomNumber % 5 === 0) {
+        inDialogue = true;
+      } else if (prev.roomNumber % 3 === 0) {
         inDialogue = true;
       } else {
         nextRoom++;
         finalEnemiesList = spawnEnemies(nextRoom);
-        newPlayer.roomsCleared++;
       }
     }
 
@@ -505,6 +533,15 @@ export const Game: React.FC = () => {
         finalBullets = [];
       } else {
         isGameOver = true;
+        // Check for high score
+        fetch('/api/leaderboard')
+          .then(res => res.json())
+          .then(scores => {
+            const isHigh = scores.length < 5 || newPlayer.score > scores[scores.length - 1].score;
+            if (isHigh) {
+              setShowInitials(true);
+            }
+          });
       }
     }
 
@@ -639,28 +676,28 @@ export const Game: React.FC = () => {
 
             {/* Enemies */}
             {gameState.enemies.map(e => (
-              <Group key={e.id} x={e.pos.x} y={e.pos.y}>
+              <Group key={e.id} x={e.pos.x} y={e.pos.y} scaleX={e.type === 'TANK' ? 1.5 : 1} scaleY={e.type === 'TANK' ? 1.5 : 1}>
                 {/* Devil Monster Sprite */}
-                <Rect x={-10} y={-10} width={20} height={20} fill="#ef4444" cornerRadius={4} />
-                <Rect x={-12} y={-14} width={6} height={8} fill="#ef4444" rotation={-20} />
-                <Rect x={6} y={-14} width={6} height={8} fill="#ef4444" rotation={20} />
+                <Rect x={-10} y={-10} width={20} height={20} fill={e.color} cornerRadius={4} />
+                <Rect x={-12} y={-14} width={6} height={8} fill={e.color} rotation={-20} />
+                <Rect x={6} y={-14} width={6} height={8} fill={e.color} rotation={20} />
                 <Rect x={-6} y={-4} width={4} height={4} fill="#000" />
                 <Rect x={2} y={-4} width={4} height={4} fill="#000" />
                 <Rect x={-4} y={4} width={8} height={2} fill="#000" />
                 
                 <Rect 
-                  x={-e.radius} 
-                  y={-e.radius - 15} 
-                  width={e.radius * 2} 
+                  x={-10} 
+                  y={-25} 
+                  width={20} 
                   height={4} 
                   fill="#334155" 
                 />
                 <Rect 
-                  x={-e.radius} 
-                  y={-e.radius - 15} 
-                  width={(e.radius * 2) * (e.health / e.maxHealth)} 
+                  x={-10} 
+                  y={-25} 
+                  width={20 * (e.health / e.maxHealth)} 
                   height={4} 
-                  fill="#ef4444" 
+                  fill={e.color} 
                 />
               </Group>
             ))}
@@ -710,8 +747,19 @@ export const Game: React.FC = () => {
           <Dialogue onChoice={handleChoice} roomNumber={gameState.roomNumber} />
         )}
 
-        {gameState.isGameOver && (
-          <GameOver score={gameState.player.score} rooms={gameState.player.roomsCleared} onRestart={() => window.location.reload()} />
+        {showInitials && (
+          <InitialsEntry 
+            score={gameState.player.score} 
+            onComplete={() => setShowInitials(false)} 
+          />
+        )}
+
+        {gameState.isGameOver && !showInitials && (
+          <GameOver 
+            score={gameState.player.score} 
+            rooms={gameState.player.roomsCleared} 
+            onRestart={() => window.location.reload()} 
+          />
         )}
       </div>
     </div>
