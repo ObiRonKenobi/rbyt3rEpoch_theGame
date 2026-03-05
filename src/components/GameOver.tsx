@@ -31,14 +31,14 @@ export const GameOver: React.FC<GameOverProps> = ({ score, rooms, onRestart }) =
           <div className="space-y-2">
             <div className="flex items-center justify-center gap-2 text-emerald-400">
               <Trophy className="w-4 h-4" />
-              <span className="text-xs font-mono uppercase tracking-widest">Final Score</span>
+              <span className="text-xs font-mono uppercase tracking-widest">Demons Slain</span>
             </div>
             <div className="text-4xl font-bold text-slate-100">{score.toLocaleString()}</div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-center gap-2 text-blue-400">
               <DoorOpen className="w-4 h-4" />
-              <span className="text-xs font-mono uppercase tracking-widest">Rooms Cleared</span>
+              <span className="text-xs font-mono uppercase tracking-widest">Sectors Cleared</span>
             </div>
             <div className="text-4xl font-bold text-slate-100">{rooms}</div>
           </div>
@@ -51,7 +51,7 @@ export const GameOver: React.FC<GameOverProps> = ({ score, rooms, onRestart }) =
           className="group relative inline-flex items-center gap-3 px-10 py-5 bg-slate-100 text-slate-950 rounded-full font-bold text-lg transition-all hover:bg-emerald-400 hover:shadow-[0_0_30px_rgba(52,211,153,0.3)]"
         >
           <RefreshCw className="w-6 h-6 group-hover:rotate-180 transition-transform duration-500" />
-          ONCE MORE UNTO THE BREACH
+          REBOOT AND PURGE
         </motion.button>
 
         <div className="pt-8">

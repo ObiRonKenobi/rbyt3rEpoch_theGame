@@ -30,10 +30,10 @@ export const HUD: React.FC<HUDProps> = ({ player, roomNumber }) => {
           </div>
         </div>
 
-        {/* Magic Bar */}
+        {/* Neural Energy Bar */}
         <div className="space-y-1">
           <div className="flex justify-between text-xs font-mono text-blue-400 uppercase tracking-wider">
-            <span>Aether</span>
+            <span>Neural Energy</span>
             <span>{Math.ceil(player.magic)} / {player.maxMagic}</span>
           </div>
           <div className="h-3 bg-slate-900/80 rounded-full border border-slate-700 overflow-hidden backdrop-blur-sm">
@@ -45,18 +45,26 @@ export const HUD: React.FC<HUDProps> = ({ player, roomNumber }) => {
             />
           </div>
           
-          {/* Aether Charges */}
-          <div className="flex gap-2 mt-2">
-            {Array.from({ length: player.maxAetherCharges }).map((_, i) => (
-              <div 
-                key={i}
-                className={`w-8 h-2 rounded-full border border-slate-700 transition-all duration-300 ${
-                  i < player.aetherCharges 
-                    ? 'bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)] border-blue-300' 
-                    : 'bg-slate-900/50'
-                }`}
-              />
-            ))}
+          {/* Neural Charges & Lives */}
+          <div className="flex justify-between items-center mt-2">
+            <div className="flex gap-2">
+              {Array.from({ length: player.maxAetherCharges }).map((_, i) => (
+                <div 
+                  key={i}
+                  className={`w-8 h-2 rounded-full border border-slate-700 transition-all duration-300 ${
+                    i < player.aetherCharges 
+                      ? 'bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)] border-blue-300' 
+                      : 'bg-slate-900/50'
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="flex gap-1">
+              {Array.from({ length: player.lives }).map((_, i) => (
+                <div key={i} className="w-3 h-3 bg-rose-500 rounded-sm shadow-[0_0_5px_rgba(244,63,94,0.5)]" />
+              ))}
+              <span className="text-[10px] font-mono text-rose-400 ml-1 uppercase">Reboots</span>
+            </div>
           </div>
 
           {player.aetherCharges > 0 && (
@@ -65,7 +73,7 @@ export const HUD: React.FC<HUDProps> = ({ player, roomNumber }) => {
               animate={{ opacity: 1, y: 0 }}
               className="text-[10px] text-blue-300 font-mono text-center animate-bounce mt-1"
             >
-              [SPACE] TO UNLEASH AETHER BREACH ({player.aetherCharges})
+              [SPACE] TO UNLEASH DEMONIC PURGE ({player.aetherCharges})
             </motion.div>
           )}
         </div>
@@ -73,10 +81,10 @@ export const HUD: React.FC<HUDProps> = ({ player, roomNumber }) => {
 
       <div className="text-right space-y-1">
         <div className="text-4xl font-black text-slate-100 italic tracking-tighter leading-none">
-          ROOM {roomNumber}
+          SECTOR {roomNumber}
         </div>
         <div className="text-sm font-mono text-slate-400 uppercase tracking-widest">
-          Score: {player.score.toString().padStart(6, '0')}
+          Demons Slain: {player.score.toString().padStart(6, '0')}
         </div>
       </div>
     </div>

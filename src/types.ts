@@ -4,8 +4,8 @@ export enum WeaponType {
   SWORD = "SWORD",
   PISTOL = "PISTOL",
   SHOTGUN = "SHOTGUN",
-  RAPID = "RAPID",
-  BEAM = "BEAM",
+  PLASMA = "PLASMA",
+  MINIGUN = "MINIGUN",
 }
 
 export interface Weapon {
@@ -36,6 +36,7 @@ export interface Player extends Entity {
   weapon: Weapon;
   score: number;
   roomsCleared: number;
+  lives: number;
 }
 
 export interface Enemy extends Entity {
@@ -52,6 +53,8 @@ export interface Bullet {
   damage: number;
   color: string;
   owner: "PLAYER" | "ENEMY";
+  maxDistance?: number;
+  distanceTraveled?: number;
 }
 
 export interface PowerUp {

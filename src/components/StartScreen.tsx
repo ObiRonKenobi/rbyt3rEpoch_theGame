@@ -44,10 +44,10 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
             transition={{ duration: 4, repeat: Infinity }}
           >
             <h1 className="text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-slate-100 to-slate-500 italic tracking-tighter leading-none">
-              RBYT3R<br />EPOCH
+              RBYT3R<br />BEGINS
             </h1>
           </motion.div>
-          <p className="text-emerald-400 font-mono uppercase tracking-[0.5em] text-sm">Bullet Hell RPG Survival</p>
+          <p className="text-emerald-400 font-mono uppercase tracking-[0.5em] text-sm">Cyberpunk Demon Extermination</p>
         </div>
 
         <div className="grid grid-cols-3 gap-6 text-left">
@@ -58,13 +58,13 @@ export const StartScreen: React.FC<StartScreenProps> = ({ onStart }) => {
           </div>
           <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-2">
             <Zap className="w-5 h-5 text-blue-400" />
-            <h3 className="text-xs font-bold uppercase tracking-wider">Aether</h3>
-            <p className="text-[10px] text-slate-500 leading-relaxed">Kill enemies to fill Aether. Press SPACE for a massive AoE blast.</p>
+            <h3 className="text-xs font-bold uppercase tracking-wider">Neural</h3>
+            <p className="text-[10px] text-slate-500 leading-relaxed">Kill demons to fill Neural energy. Press SPACE for a massive Demonic Purge.</p>
           </div>
           <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-2xl space-y-2">
             <Shield className="w-5 h-5 text-rose-400" />
-            <h3 className="text-xs font-bold uppercase tracking-wider">Choices</h3>
-            <p className="text-[10px] text-slate-500 leading-relaxed">Every 3 rooms, meet the Wanderer to upgrade your abilities.</p>
+            <h3 className="text-xs font-bold uppercase tracking-wider">Neural Link</h3>
+            <p className="text-[10px] text-slate-500 leading-relaxed">Every 3 sectors, establish a Neural Link to upgrade your combat systems.</p>
           </div>
         </div>
 

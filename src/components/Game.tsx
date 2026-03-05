@@ -25,6 +25,32 @@ const PISTOL_WEAPON = {
   color: '#ffffff', // White bullets for visibility
 };
 
+const SHOTGUN_WEAPON = {
+  type: WeaponType.SHOTGUN,
+  damage: 12,
+  fireRate: 700,
+  bulletSpeed: 10,
+  color: '#f97316',
+  spread: 0.4,
+  count: 6,
+};
+
+const PLASMA_WEAPON = {
+  type: WeaponType.PLASMA,
+  damage: 50,
+  fireRate: 900,
+  bulletSpeed: 6,
+  color: '#a855f7',
+};
+
+const MINIGUN_WEAPON = {
+  type: WeaponType.MINIGUN,
+  damage: 8,
+  fireRate: 100,
+  bulletSpeed: 14,
+  color: '#fbbf24',
+};
+
 export const Game: React.FC = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [meleeSwing, setMeleeSwing] = useState<{ active: boolean; angle: number }>({ active: false, angle: 0 });
@@ -45,6 +71,7 @@ export const Game: React.FC = () => {
       weapon: SWORD_WEAPON,
       score: 0,
       roomsCleared: 0,
+      lives: 1,
     },
     enemies: [],
     bullets: [],
@@ -202,7 +229,7 @@ export const Game: React.FC = () => {
       newPlayer.pos.y = Math.max(newPlayer.radius, Math.min(CANVAS_HEIGHT - newPlayer.radius, newPlayer.pos.y + (moveY / length) * newPlayer.speed));
     }
 
-    // AoE Attack (Aether Breach)
+    // AoE Attack (Demonic Purge)
     let newExplosions = prev.explosions.map(ex => ({
       ...ex,
       radius: ex.radius + (ex.maxRadius - ex.radius) * 0.1,
@@ -225,8 +252,21 @@ export const Game: React.FC = () => {
     }
 
     // Shooting / Melee
-    let newBullets = prev.bullets.map(b => ({ ...b, pos: { x: b.pos.x + b.vel.x, y: b.pos.y + b.vel.y } }))
-      .filter(b => b.pos.x > -50 && b.pos.x < CANVAS_WIDTH + 50 && b.pos.y > -50 && b.pos.y < CANVAS_HEIGHT + 50);
+    let newBullets = prev.bullets.map(b => {
+      const dx = b.vel.x;
+      const dy = b.vel.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      return { 
+        ...b, 
+        pos: { x: b.pos.x + dx, y: b.pos.y + dy },
+        distanceTraveled: (b.distanceTraveled || 0) + dist
+      };
+    })
+    .filter(b => {
+      const withinBounds = b.pos.x > -50 && b.pos.x < CANVAS_WIDTH + 50 && b.pos.y > -50 && b.pos.y < CANVAS_HEIGHT + 50;
+      const withinRange = !b.maxDistance || (b.distanceTraveled || 0) < b.maxDistance;
+      return withinBounds && withinRange;
+    });
     
     if (isMouseDown.current && time - lastFireTime.current > newPlayer.weapon.fireRate) {
       lastFireTime.current = time;
@@ -254,8 +294,64 @@ export const Game: React.FC = () => {
           }
           return enemy;
         });
+      } else if (newPlayer.weapon.type === WeaponType.SHOTGUN) {
+        const count = newPlayer.weapon.count || 5;
+        const spread = newPlayer.weapon.spread || 0.4;
+        for (let i = 0; i < count; i++) {
+          const offset = (i - (count - 1) / 2) * (spread / count);
+          newBullets.push({
+            id: `bullet-${Date.now()}-${Math.random()}`,
+            pos: { x: newPlayer.pos.x, y: newPlayer.pos.y },
+            vel: { 
+              x: Math.cos(angle + offset) * newPlayer.weapon.bulletSpeed, 
+              y: Math.sin(angle + offset) * newPlayer.weapon.bulletSpeed 
+            },
+            radius: 4,
+            damage: newPlayer.weapon.damage,
+            color: newPlayer.weapon.color, 
+            owner: 'PLAYER',
+            maxDistance: 200, // Short range
+            distanceTraveled: 0,
+          });
+        }
+      } else if (newPlayer.weapon.type === WeaponType.PLASMA) {
+        newBullets.push({
+          id: `bullet-plasma-${Date.now()}-${Math.random()}`,
+          pos: { x: newPlayer.pos.x, y: newPlayer.pos.y },
+          vel: { 
+            x: Math.cos(angle) * newPlayer.weapon.bulletSpeed, 
+            y: Math.sin(angle) * newPlayer.weapon.bulletSpeed 
+          },
+          radius: 12,
+          damage: newPlayer.weapon.damage,
+          color: newPlayer.weapon.color, 
+          owner: 'PLAYER',
+          distanceTraveled: 0,
+        });
+      } else if (newPlayer.weapon.type === WeaponType.MINIGUN) {
+        // Parallel streams
+        const perpAngle = angle + Math.PI / 2;
+        const offsets = [-8, 8];
+        offsets.forEach(off => {
+          newBullets.push({
+            id: `bullet-mini-${Date.now()}-${Math.random()}`,
+            pos: { 
+              x: newPlayer.pos.x + Math.cos(perpAngle) * off, 
+              y: newPlayer.pos.y + Math.sin(perpAngle) * off 
+            },
+            vel: { 
+              x: Math.cos(angle) * newPlayer.weapon.bulletSpeed, 
+              y: Math.sin(angle) * newPlayer.weapon.bulletSpeed 
+            },
+            radius: 4,
+            damage: newPlayer.weapon.damage,
+            color: newPlayer.weapon.color, 
+            owner: 'PLAYER',
+            distanceTraveled: 0,
+          });
+        });
       } else {
-        // Ranged Shooting
+        // Ranged Shooting (Pistol)
         newBullets.push({
           id: `bullet-${Date.now()}-${Math.random()}`,
           pos: { x: newPlayer.pos.x, y: newPlayer.pos.y },
@@ -267,6 +363,7 @@ export const Game: React.FC = () => {
           damage: newPlayer.weapon.damage,
           color: '#ffffff', 
           owner: 'PLAYER',
+          distanceTraveled: 0,
         });
       }
     }
@@ -296,6 +393,7 @@ export const Game: React.FC = () => {
           damage: 5,
           color: '#f87171',
           owner: 'ENEMY',
+          distanceTraveled: 0,
         });
       }
 
@@ -316,6 +414,18 @@ export const Game: React.FC = () => {
           if (dist < bullet.radius + enemy.radius) {
             h -= bullet.damage;
             activeBulletIds.delete(bullet.id);
+
+            // Plasma Explosion
+            if (newPlayer.weapon.type === WeaponType.PLASMA) {
+              newExplosions.push({
+                id: `plasma-ex-${Date.now()}-${Math.random()}`,
+                pos: { ...bullet.pos },
+                radius: 0,
+                maxRadius: 80,
+                duration: 500,
+                startTime: time,
+              });
+            }
           }
         }
       });
@@ -333,7 +443,10 @@ export const Game: React.FC = () => {
 
       if (h <= 0 && enemy.health > 0) {
         newPlayer.score += 10;
-        newPlayer.magic = Math.min(newPlayer.maxMagic, newPlayer.magic + 5);
+        // Only accumulate magic if we have room for more charges
+        if (newPlayer.aetherCharges < newPlayer.maxAetherCharges) {
+          newPlayer.magic = Math.min(newPlayer.maxMagic, newPlayer.magic + 5);
+        }
       }
 
       return { ...enemy, health: h };
@@ -351,7 +464,7 @@ export const Game: React.FC = () => {
       }
     });
 
-    const finalBullets = newBullets.filter(b => activeBulletIds.has(b.id));
+    let finalBullets = newBullets.filter(b => activeBulletIds.has(b.id));
 
     // Power Up Collision
     const newPowerUps = prev.powerUps.filter(p => {
@@ -374,7 +487,7 @@ export const Game: React.FC = () => {
     let inDialogue = prev.inDialogue;
     let finalEnemiesList = finalEnemies;
     if (finalEnemies.length === 0 && !prev.inDialogue) {
-      if (prev.roomNumber % 3 === 0) {
+      if (prev.roomNumber % 3 === 0 || prev.roomNumber % 5 === 0) {
         inDialogue = true;
       } else {
         nextRoom++;
@@ -383,7 +496,17 @@ export const Game: React.FC = () => {
       }
     }
 
-    const isGameOver = newPlayer.health <= 0;
+    let isGameOver = prev.isGameOver;
+    if (newPlayer.health <= 0) {
+      if (newPlayer.lives > 0) {
+        newPlayer.lives--;
+        newPlayer.health = newPlayer.maxHealth;
+        // Brief invulnerability or clear bullets?
+        finalBullets = [];
+      } else {
+        isGameOver = true;
+      }
+    }
 
     setGameState({
       ...prev,
@@ -406,7 +529,7 @@ export const Game: React.FC = () => {
     return () => cancelAnimationFrame(requestRef.current);
   }, [update]);
 
-  const handleChoice = (choice: 'WEAPON' | 'HEALTH' | 'MAGIC') => {
+  const handleChoice = (choice: 'WEAPON' | 'HEALTH' | 'MAGIC' | 'LIFE' | 'CHOOSE_PISTOL' | 'CHOOSE_SHOTGUN' | 'CHOOSE_PLASMA' | 'CHOOSE_MINIGUN') => {
     setGameState(prev => {
       const newPlayer = { ...prev.player };
       if (choice === 'WEAPON') {
@@ -420,6 +543,16 @@ export const Game: React.FC = () => {
         newPlayer.health = newPlayer.maxHealth;
       } else if (choice === 'MAGIC') {
         newPlayer.maxAetherCharges = Math.min(3, newPlayer.maxAetherCharges + 1);
+      } else if (choice === 'LIFE') {
+        newPlayer.lives++;
+      } else if (choice === 'CHOOSE_PISTOL') {
+        newPlayer.weapon = PISTOL_WEAPON;
+      } else if (choice === 'CHOOSE_SHOTGUN') {
+        newPlayer.weapon = SHOTGUN_WEAPON;
+      } else if (choice === 'CHOOSE_PLASMA') {
+        newPlayer.weapon = PLASMA_WEAPON;
+      } else if (choice === 'CHOOSE_MINIGUN') {
+        newPlayer.weapon = MINIGUN_WEAPON;
       }
       return {
         ...prev,
