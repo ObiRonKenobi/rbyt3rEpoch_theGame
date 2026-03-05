@@ -160,6 +160,7 @@ export const Game: React.FC = () => {
   }, [spawnEnemies]);
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    if (showInitials) return;
     if (['Space', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
       e.preventDefault();
     }
@@ -497,7 +498,7 @@ export const Game: React.FC = () => {
         if (p.type === 'WEAPON_UPGRADE') {
           newPlayer.weapon = PISTOL_WEAPON;
         } else if (p.type === 'HEALTH') {
-          newPlayer.health = Math.min(newPlayer.maxHealth, newPlayer.health + 30);
+          newPlayer.health = Math.min(newPlayer.maxHealth, newPlayer.health + newPlayer.maxHealth * 0.25);
         }
         return false;
       }
@@ -508,6 +509,8 @@ export const Game: React.FC = () => {
     let nextRoom = prev.roomNumber;
     let inDialogue = prev.inDialogue;
     let finalEnemiesList = finalEnemies;
+    let finalPowerUps = newPowerUps;
+
     if (finalEnemies.length === 0 && !prev.inDialogue) {
       newPlayer.roomsCleared++;
       if (prev.roomNumber % 15 === 0) {
@@ -521,6 +524,16 @@ export const Game: React.FC = () => {
       } else {
         nextRoom++;
         finalEnemiesList = spawnEnemies(nextRoom);
+        
+        // Spawn health power up every 2nd level
+        if (nextRoom % 2 === 0) {
+          finalPowerUps.push({
+            id: `health-${Date.now()}`,
+            pos: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
+            type: 'HEALTH',
+            radius: 12,
+          });
+        }
       }
     }
 
@@ -550,7 +563,7 @@ export const Game: React.FC = () => {
       player: newPlayer,
       enemies: finalEnemiesList,
       bullets: finalBullets,
-      powerUps: newPowerUps,
+      powerUps: finalPowerUps,
       explosions: newExplosions,
       roomNumber: nextRoom,
       inDialogue,
@@ -591,12 +604,24 @@ export const Game: React.FC = () => {
       } else if (choice === 'CHOOSE_MINIGUN') {
         newPlayer.weapon = MINIGUN_WEAPON;
       }
+      const nextRoom = prev.roomNumber + 1;
+      const newPowerUps = [...prev.powerUps];
+      if (nextRoom % 2 === 0) {
+        newPowerUps.push({
+          id: `health-${Date.now()}`,
+          pos: { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 },
+          type: 'HEALTH',
+          radius: 12,
+        });
+      }
+
       return {
         ...prev,
         player: newPlayer,
         inDialogue: false,
-        roomNumber: prev.roomNumber + 1,
-        enemies: spawnEnemies(prev.roomNumber + 1),
+        roomNumber: nextRoom,
+        enemies: spawnEnemies(nextRoom),
+        powerUps: newPowerUps,
       };
     });
   };
@@ -629,9 +654,20 @@ export const Game: React.FC = () => {
             {/* Power Ups */}
             {gameState.powerUps.map(p => (
               <Group key={p.id} x={p.pos.x} y={p.pos.y}>
-                <Circle radius={p.radius} fill="#fbbf24" shadowBlur={10} />
+                <Circle 
+                  radius={p.radius} 
+                  fill={p.type === 'HEALTH' ? '#f43f5e' : '#fbbf24'} 
+                  shadowBlur={15} 
+                  shadowColor={p.type === 'HEALTH' ? '#f43f5e' : '#fbbf24'} 
+                />
                 {p.type === 'WEAPON_UPGRADE' && (
                   <Rect x={-5} y={-2} width={10} height={4} fill="#1e293b" />
+                )}
+                {p.type === 'HEALTH' && (
+                  <Group scaleX={0.6} scaleY={0.6} x={-5} y={-5}>
+                    <Rect width={10} height={6} fill="#fff" cornerRadius={2} />
+                    <Rect x={2} y={-4} width={6} height={10} fill="#fff" cornerRadius={2} />
+                  </Group>
                 )}
               </Group>
             ))}
