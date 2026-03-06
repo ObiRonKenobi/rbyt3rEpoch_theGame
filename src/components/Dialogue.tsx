@@ -11,6 +11,17 @@ export const Dialogue: React.FC<DialogueProps> = ({ onChoice, roomNumber }) => {
   const isWeaponSelect = roomNumber % 5 === 0;
   const isStandardUpgrade = !isWeaponSelect && roomNumber % 3 === 0;
 
+  const weaponOptions = React.useMemo(() => {
+    if (!isWeaponSelect) return [];
+    const allOptions = [
+      { id: 'CHOOSE_PISTOL' as const, title: 'Pistol', desc: 'Standard reliable fire.', color: 'slate', icon: <Crosshair className="w-6 h-6 text-slate-100" /> },
+      { id: 'CHOOSE_SHOTGUN' as const, title: 'Shotgun', desc: 'Wide spread, high impact.', color: 'orange', icon: <Shield className="w-6 h-6 text-orange-400" /> },
+      { id: 'CHOOSE_PLASMA' as const, title: 'Plasma', desc: 'Slow, explosive rounds.', color: 'purple', icon: <Flame className="w-6 h-6 text-purple-400" /> },
+      { id: 'CHOOSE_MINIGUN' as const, title: 'Minigun', desc: 'Rapid parallel fire.', color: 'yellow', icon: <ZapOff className="w-6 h-6 text-yellow-400" /> },
+    ];
+    return allOptions.sort(() => Math.random() - 0.5).slice(0, 2);
+  }, [roomNumber, isWeaponSelect]);
+
   return (
     <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-8">
       <motion.div 
@@ -37,38 +48,18 @@ export const Dialogue: React.FC<DialogueProps> = ({ onChoice, roomNumber }) => {
             </div>
           </div>
 
-          <div className={`grid ${isWeaponSelect ? 'grid-cols-4' : 'grid-cols-3'} gap-4`}>
+          <div className={`grid ${isWeaponSelect ? 'grid-cols-2' : 'grid-cols-3'} gap-4`}>
             {isWeaponSelect ? (
-              <>
+              weaponOptions.map(opt => (
                 <UpgradeButton 
-                  icon={<Crosshair className="w-6 h-6 text-slate-100" />}
-                  title="Pistol"
-                  desc="Standard reliable fire."
-                  color="slate"
-                  onClick={() => onChoice('CHOOSE_PISTOL')}
+                  key={opt.id}
+                  icon={opt.icon}
+                  title={opt.title}
+                  desc={opt.desc}
+                  color={opt.color}
+                  onClick={() => onChoice(opt.id)}
                 />
-                <UpgradeButton 
-                  icon={<Shield className="w-6 h-6 text-orange-400" />}
-                  title="Shotgun"
-                  desc="Wide spread, high impact."
-                  color="orange"
-                  onClick={() => onChoice('CHOOSE_SHOTGUN')}
-                />
-                <UpgradeButton 
-                  icon={<Flame className="w-6 h-6 text-purple-400" />}
-                  title="Plasma"
-                  desc="Slow, explosive rounds."
-                  color="purple"
-                  onClick={() => onChoice('CHOOSE_PLASMA')}
-                />
-                <UpgradeButton 
-                  icon={<ZapOff className="w-6 h-6 text-yellow-400" />}
-                  title="Minigun"
-                  desc="Rapid parallel fire."
-                  color="yellow"
-                  onClick={() => onChoice('CHOOSE_MINIGUN')}
-                />
-              </>
+              ))
             ) : (
               <>
                 <UpgradeButton 

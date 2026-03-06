@@ -108,6 +108,24 @@ export const Game: React.FC = () => {
   }, [gameState]);
 
   const spawnEnemies = useCallback((roomNum: number) => {
+    const isBossRoom = roomNum % 6 === 0;
+    const difficultyMultiplier = 1 + (roomNum * 0.15);
+    
+    if (isBossRoom) {
+      return [{
+        id: `boss-${Date.now()}`,
+        pos: { x: CANVAS_WIDTH / 2, y: -100 },
+        radius: 60,
+        health: 600 * difficultyMultiplier,
+        maxHealth: 600 * difficultyMultiplier,
+        speed: 0.3,
+        color: '#f43f5e', // Rose/Red
+        type: 'BOSS' as const,
+        lastShot: 0,
+        shootCooldown: 1500 / difficultyMultiplier,
+      }];
+    }
+
     const count = 3 + Math.floor(roomNum * 1.5);
     const newEnemies: Enemy[] = [];
     for (let i = 0; i < count; i++) {
@@ -118,8 +136,6 @@ export const Game: React.FC = () => {
       else if (side === 2) { x = Math.random() * CANVAS_WIDTH; y = CANVAS_HEIGHT + 50; }
       else { x = -50; y = Math.random() * CANVAS_HEIGHT; }
 
-      const difficultyMultiplier = 1 + (roomNum * 0.1);
-      
       // Every 10 levels, introduce a Green Demon (Tank)
       // At level 10+, there's a chance to spawn one.
       const isTank = roomNum >= 10 && (i === 0 || Math.random() < 0.2);
@@ -133,7 +149,7 @@ export const Game: React.FC = () => {
           maxHealth: 60 * difficultyMultiplier,
           speed: 0.4 + Math.random() * 0.2, // Much slower
           color: '#22c55e', // Green
-          type: 'TANK',
+          type: 'TANK' as const,
           lastShot: 0,
           shootCooldown: 3000 / difficultyMultiplier,
         });
@@ -146,7 +162,7 @@ export const Game: React.FC = () => {
           maxHealth: 30 * difficultyMultiplier,
           speed: 0.6 + Math.random() * (0.3 + roomNum * 0.02), // Slower than before
           color: '#ef4444',
-          type: 'BASIC',
+          type: 'BASIC' as const,
           lastShot: 0,
           shootCooldown: 2500 / difficultyMultiplier,
         });
@@ -408,16 +424,45 @@ export const Game: React.FC = () => {
 
       if (time - enemy.lastShot > enemy.shootCooldown) {
         enemy.lastShot = time;
-        newBullets.push({
-          id: `ebullet-${Date.now()}-${enemy.id}`,
-          pos: { ...enemy.pos },
-          vel: { x: (dx / length) * 4, y: (dy / length) * 4 },
-          radius: 4,
-          damage: 5,
-          color: '#f87171',
-          owner: 'ENEMY',
-          distanceTraveled: 0,
-        });
+        if (enemy.type === 'BOSS') {
+          // Boss shoots a ring of bullets
+          const bulletCount = 8;
+          for (let i = 0; i < bulletCount; i++) {
+            const angle = (i / bulletCount) * Math.PI * 2;
+            newBullets.push({
+              id: `ebullet-boss-${Date.now()}-${enemy.id}-${i}`,
+              pos: { ...enemy.pos },
+              vel: { x: Math.cos(angle) * 3, y: Math.sin(angle) * 3 },
+              radius: 6,
+              damage: 10,
+              color: '#f43f5e',
+              owner: 'ENEMY',
+              distanceTraveled: 0,
+            });
+          }
+          // Also shoot a direct bullet at player
+          newBullets.push({
+            id: `ebullet-boss-direct-${Date.now()}-${enemy.id}`,
+            pos: { ...enemy.pos },
+            vel: { x: (dx / length) * 5, y: (dy / length) * 5 },
+            radius: 8,
+            damage: 15,
+            color: '#fb7185',
+            owner: 'ENEMY',
+            distanceTraveled: 0,
+          });
+        } else {
+          newBullets.push({
+            id: `ebullet-${Date.now()}-${enemy.id}`,
+            pos: { ...enemy.pos },
+            vel: { x: (dx / length) * 4, y: (dy / length) * 4 },
+            radius: 4,
+            damage: 5,
+            color: '#f87171',
+            owner: 'ENEMY',
+            distanceTraveled: 0,
+          });
+        }
       }
 
       return { ...enemy, pos: nextPos };
@@ -712,7 +757,13 @@ export const Game: React.FC = () => {
 
             {/* Enemies */}
             {gameState.enemies.map(e => (
-              <Group key={e.id} x={e.pos.x} y={e.pos.y} scaleX={e.type === 'TANK' ? 1.5 : 1} scaleY={e.type === 'TANK' ? 1.5 : 1}>
+              <Group 
+                key={e.id} 
+                x={e.pos.x} 
+                y={e.pos.y} 
+                scaleX={e.type === 'BOSS' ? 4 : e.type === 'TANK' ? 1.5 : 1} 
+                scaleY={e.type === 'BOSS' ? 4 : e.type === 'TANK' ? 1.5 : 1}
+              >
                 {/* Devil Monster Sprite */}
                 <Rect x={-10} y={-10} width={20} height={20} fill={e.color} cornerRadius={4} />
                 <Rect x={-12} y={-14} width={6} height={8} fill={e.color} rotation={-20} />
@@ -721,6 +772,14 @@ export const Game: React.FC = () => {
                 <Rect x={2} y={-4} width={4} height={4} fill="#000" />
                 <Rect x={-4} y={4} width={8} height={2} fill="#000" />
                 
+                {e.type === 'BOSS' && (
+                  <>
+                    <Rect x={-8} y={-8} width={4} height={4} fill="#f43f5e" />
+                    <Rect x={4} y={-8} width={4} height={4} fill="#f43f5e" />
+                    <Rect x={-2} y={-15} width={4} height={4} fill="#fb7185" />
+                  </>
+                )}
+
                 <Rect 
                   x={-10} 
                   y={-25} 

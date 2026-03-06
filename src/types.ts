@@ -40,7 +40,7 @@ export interface Player extends Entity {
 }
 
 export interface Enemy extends Entity {
-  type: "BASIC" | "FAST" | "TANK" | "ELITE";
+  type: "BASIC" | "FAST" | "TANK" | "ELITE" | "BOSS";
   lastShot: number;
   shootCooldown: number;
 }
